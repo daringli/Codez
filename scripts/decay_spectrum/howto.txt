@@ -1,0 +1,7 @@
+//Get a TTree from a root file
+TTree* tre=(TTree*)_file0->Get("mg022-25.tsv");
+
+t1->Draw("px>>htemp(200,0,20)");
+
+//draw histogram
+TCanvas canvas=new TCanvas();

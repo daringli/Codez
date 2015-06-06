@@ -1,0 +1,10 @@
+projectile 0
+element    13
+mass       23
+energy     efile
+outmain n
+outspectra y 
+outbinspectra y
+popmev n
+maxz 0
+maxn 0

@@ -423,7 +423,7 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
     //calculated level densities for this nuclei
     std::vector<std::vector<double> > rhojfE;
     rhojfE.resize(jmax, std::vector<double>(floor((Ei-BE)/dE), 0));
-
+ 
     //sum over all allowed l.
     for(int l=0;l<lmax;l++){
       //map to store which Jf we encounter for this l

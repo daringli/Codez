@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <exception>
-#include <cmath>       //pow, exp 
+#include <cmath>       //pow, exp, floor
 #include <cstdlib>     // atoi, abs
 #include <cstring>
 
@@ -383,20 +383,18 @@ double Codex_particle_model::spin(Nucleus n) const
 
 
 //this is where we sum up all the decays due to the processes this model describes. record decay and cummulative probability distribution in Rsum_decay.
+//it is not properly normalized, since that saves time.
 void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pair<double,Decay> > & Rsum_decay,  int & counter) const
 {
   double Ei=n.E();
   double Ji=n.J();
-  double rhoM=rho(n,Ei);
   int Zm=n.Z();
   int Nm=n.N();
-  int Zd,Nd;
-  double BE,SE,s,Jf,Ef,rhoD,trans_coef;
   Nucleus daughter, evap;
-  
+  //loop over different particles to decay by
   for(int particle=0;particle<=5;particle++){
     int Zevap, Nevap;
-    //switch case to make so that we sum lowest probability first.
+    //switch case to make so that we sum (generally) lowest probability first.
     switch(particle){
     case 0 : Zevap=2; Nevap=1; break; //3He
     case 1 : Zevap=1; Nevap=2; break; //t
@@ -404,9 +402,9 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
     case 3 : Zevap=2; Nevap=2; break; //4He
     case 4 : Zevap=1; Nevap=0; break; //p
     case 5 : Zevap=0; Nevap=1; break; //n
-    }
-    Zd=Zm-Zevap; //daughter Z
-    Nd=Nm-Nevap; //daughter N
+    } 
+    int Zd=Zm-Zevap; //daughter Z
+    int Nd=Nm-Nevap; //daughter N
     daughter.set_Z(Zd);
     daughter.set_N(Nd);
     //if we do not have a mass for the daughter, we skip it.
@@ -418,66 +416,78 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
     evap.set_Z(Zevap);
     evap.set_N(Nevap);
     Proximity_potential pot = potential_properties(n, evap);
-    s=spin(evap);
-    BE=mass_model.excess_mass(daughter)+mass_model.excess_mass(evap)-mass_model.excess_mass(n);
+    double s=spin(evap);
+    double BE=mass_model.excess_mass(daughter)+mass_model.excess_mass(evap)-mass_model.excess_mass(n);
     //printf("Nev,Zev (BE):%i,%i (%e)\n",Nevap,Zevap,BE);
 
-    //sum over all possible final spin J. Note: J=jf/2
-    for(int jf=0;jf<jmax;jf++){
-      //get lowest energy threshold for decay to take place.
-      Jf=(double)jf/2.0;
-      daughter.set_J(Jf);
-      SE=BE+intrinsic_energy(daughter);
-      //sum over all possible evaporation l.
-      //note: what is possible depends on intrinsic spin of evap.
-      //and how this couple to final spin of daugther
-      for(double S=fabs(Jf-s);S<=fabs(Jf+s);S+=1.0){
-	//skip iteration if this S does not give integer l.
-	//quick and dirty solution!
-	if(Ji-S != (int)(Ji-S)){
-	  continue;
-	}
-	Ef=Ei-BE;
-	while(Ef>0){
-	  Ef=Ef-dE; //we do this first in loop, so we cant decay to i
-	  for(int l=abs(Ji-S);l<=abs(Ji+S);l++){
-	    //should probably calculate lmax based on Jmax
-	    //this 'if' will have to do until then...
-	    if(l>lmax){
-	      break;
-	    }
-	    rhoD=rho(daughter,Ef);
-	    trans_coef=transmission(n,daughter,Ei-Ef-BE,l,pot); //Should it be SE rather than BE?
-	    //printf("trans_coef: %e\n",trans_coef);
-	    if(trans_coef==0){
-	      break;
-	      //subsequent l will be worse, since higher centrifugal barrier
-	    }
-	    counter++;
-	    //store cummulative R in first and decay info in second.
-	    std::pair<double,Decay> to_store;
-	    to_store.first=Rsum_decay[counter-1].first+(rhoD/rhoM)*trans_coef;
-	    //printf("rhoD/rhoM T: %e\n",(rhoD/rhoM)*trans_coef);
-	    //printf("Rsum: %e\n",to_store.first);
-	    
-            to_store.second.E=Ef;
-	    to_store.second.Z=Zevap;
-	    to_store.second.N=Nevap;
-	    to_store.second.j=jf;
-	    to_store.second.l=l;
-	    Rsum_decay.push_back(to_store);
-	    //if((particle==4 || particle==5 )&& counter%10==0){
-	    //  printf("l, counter: %i, %i\n",l,counter);
-	    //}
+    //calculated level densities for this nuclei
+    std::vector<std::vector<double> > rhojfE;
+    rhojfE.resize(jmax, std::vector<double>(floor((Ei-BE)/dE), 0));
+
+    //sum over all allowed l.
+    for(int l=0;l<lmax;l++){
+      //map to store which Jf we encounter for this l
+      //note: jf=2*Jf
+      std::map<short int, short int> jf_counter;
+     
+      //ways to couple l and initial spin
+      for(float S=fabs(Ji-l);S<=fabs(Ji+l);l+=1.0){
+	for(float Jf=fabs(S-s);Jf<=fabs(S+s);Jf+=1.0){
+	  //should not go over jmax
+	  if(Jf*2>jmax){
+	    break;
 	  }
+	  jf_counter[(short int)(2*Jf)]++;
 	}
       }
-      //printf("jf:%i\n", jf);
+
+      //get lowest energy threshold for decay to take place.
+      //Jf=(double)jf/2.0;
+      //daughter.set_J(Jf);
+      //double SE=BE+intrinsic_energy(daughter);
+     
+      float Ef=0;
+      int Ef_bin=0;
+      while(Ef<Ei-BE){
+	double trans_coef=transmission(n,daughter,Ei-Ef-BE,l,pot); 
+	if(trans_coef==0){
+	  break;
+	  //subsequent Ef will be worse, since we have a lower kinetic energy
+	}
+	daughter.set_E(Ef);
+
+	//loop over all the possible Jf for this l
+	for(std::map<short int,short int>::iterator it =jf_counter.begin(); it !=jf_counter.end();++it){
+	  short int jf=it->first;
+	  short int jf_count=it->second;
+	  //check if we have computed this rho(Jf,E) already
+	  if(rhojfE[jf][Ef_bin]==0){
+	    //if no, we do so.
+	    daughter.set_J(jf/2.0);
+	    rhojfE[jf][Ef_bin]=rho(daughter,Ef);
+	  }
+	  counter++;
+	  //store cummulative R in first and decay info in second.
+	  std::pair<double,Decay> to_store;
+	  to_store.first=Rsum_decay[counter-1].first+jf_count*rhojfE[jf][Ef_bin]*trans_coef;	    
+	  to_store.second.E=Ef;
+	  to_store.second.Z=Zevap;
+	  to_store.second.N=Nevap;
+	  to_store.second.j=jf;
+	  to_store.second.l=l;
+	  Rsum_decay.push_back(to_store);
+	}
+	//
+	Ef=Ef+dE; 
+	Ef_bin++;
+      }
     }
-    //printf("Rsum Zev=%i, Nev=%i : %e\n",Zevap,Nevap,Rsum_decay[counter].first);
-    //printf("counter: %i\n",counter);
-    //printf("----------\n");	    
+    //printf("jf:%i\n", jf);
   }
-  
+  //printf("Rsum Zev=%i, Nev=%i : %e\n",Zevap,Nevap,Rsum_decay[counter].first);
+  //printf("counter: %i\n",counter);
+  //printf("----------\n");	    
 }
+  
+
 

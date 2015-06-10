@@ -1,8 +1,9 @@
 projectile 0
-element    16
-mass       28
+element    23
+mass       48
 energy     efile
 outmain n
+disctable 3
 outspectra y 
 outbinspectra y
 popmev y

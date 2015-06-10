@@ -4,7 +4,7 @@
 #while the default output makes plots for fixed nuclei and different J.
 #Flag -n <name> specifies a name to attach in front of the numberous outfiles
 
-addpath ("/n/home/bstefan/m/deexcite/git/11-05-2015/scripts/")
+addpath ("/n/home/bstefan/m/deexcite/final/scripts/")
 
 #plot style parameters
 ysize=500;
@@ -115,5 +115,5 @@ endfor
         legend hide
       endif
       
-      outfilename=strcat(prename,"potZ",num2str(mothers(j,1)),"N",num2str(mothers(j,2)),".eps")
+      outfilename=strcat(prename,"transZ",num2str(mothers(j,1)),"N",num2str(mothers(j,2)),".eps")
       print(h,'-deps','-color',outfilename,sizestring,fontstring)

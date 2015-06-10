@@ -1,7 +1,7 @@
 atadir=/n/data2/bstefan
-egdir=/n/home/bstefan/m/deexcite/git/11-05-2015
+egdir=/n/home/bstefan/m/deexcite/final
 
-plotdir=/n/home/bstefan/m/deexcite/git/11-05-2015/scripts/potential
+plotdir=/n/home/bstefan/m/deexcite/final/scripts/potential
 #Z=10-90
 #N=10-130
 Z=5-20

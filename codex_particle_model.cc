@@ -390,6 +390,7 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
   double Ji=n.J();
   int Zm=n.Z();
   int Nm=n.N();
+  double rhoM=rho(n,Ei);
   Nucleus daughter, evap;
   //loop over different particles to decay by
   for(int particle=0;particle<=5;particle++){
@@ -419,19 +420,25 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
     double s=spin(evap);
     double BE=mass_model.excess_mass(daughter)+mass_model.excess_mass(evap)-mass_model.excess_mass(n);
     //printf("Nev,Zev (BE):%i,%i (%e)\n",Nevap,Zevap,BE);
+    if(Ei-BE<0){
+      //cannot decay by this
+      continue;
+    }
 
     //calculated level densities for this nuclei
     std::vector<std::vector<double> > rhojfE;
-    rhojfE.resize(jmax, std::vector<double>(floor((Ei-BE)/dE), 0));
+    rhojfE.resize(jmax, std::vector<double>(1+floor((Ei-BE)/dE), 0));
+    //puts("alloced");
  
     //sum over all allowed l.
     for(int l=0;l<lmax;l++){
+      //printf("l: %i\n",l);
       //map to store which Jf we encounter for this l
       //note: jf=2*Jf
       std::map<short int, short int> jf_counter;
      
       //ways to couple l and initial spin
-      for(float S=fabs(Ji-l);S<=fabs(Ji+l);l+=1.0){
+      for(float S=fabs(Ji-l);S<=fabs(Ji+l);S+=1.0){
 	for(float Jf=fabs(S-s);Jf<=fabs(S+s);Jf+=1.0){
 	  //should not go over jmax
 	  if(Jf*2>jmax){
@@ -449,6 +456,7 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
       float Ef=0;
       int Ef_bin=0;
       while(Ef<Ei-BE){
+	//printf("Ef: %f\n",Ef);
 	double trans_coef=transmission(n,daughter,Ei-Ef-BE,l,pot); 
 	if(trans_coef==0){
 	  break;
@@ -459,16 +467,18 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
 	//loop over all the possible Jf for this l
 	for(std::map<short int,short int>::iterator it =jf_counter.begin(); it !=jf_counter.end();++it){
 	  short int jf=it->first;
+	  //printf("jf: %i\n",jf);
 	  short int jf_count=it->second;
 	  //check if we have computed this rho(Jf,E) already
 	  if(rhojfE[jf][Ef_bin]==0){
 	    //if no, we do so.
 	    daughter.set_J(jf/2.0);
-	    rhojfE[jf][Ef_bin]=rho(daughter,Ef);
+	    rhojfE[jf][Ef_bin]=rho(daughter,Ef)/rhoM;
 	  }
 	  counter++;
 	  //store cummulative R in first and decay info in second.
 	  std::pair<double,Decay> to_store;
+	  //printf("jf_count: %i\n", jf_count);
 	  to_store.first=Rsum_decay[counter-1].first+jf_count*rhojfE[jf][Ef_bin]*trans_coef;	    
 	  to_store.second.E=Ef;
 	  to_store.second.Z=Zevap;
@@ -476,17 +486,17 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
 	  to_store.second.j=jf;
 	  to_store.second.l=l;
 	  Rsum_decay.push_back(to_store);
+	  //printf("Rsum Zev=%i, Nev=%i : %e\n",Zevap,Nevap,Rsum_decay[counter].first);
 	}
 	//
 	Ef=Ef+dE; 
 	Ef_bin++;
       }
     }
-    //printf("jf:%i\n", jf);
-  }
-  //printf("Rsum Zev=%i, Nev=%i : %e\n",Zevap,Nevap,Rsum_decay[counter].first);
-  //printf("counter: %i\n",counter);
-  //printf("----------\n");	    
+    //printf("Rsum Zev=%i, Nev=%i : %e\n",Zevap,Nevap,Rsum_decay[counter].first);
+    //printf("counter: %i\n",counter);
+    //printf("----------\n");
+  }	    
 }
   
 

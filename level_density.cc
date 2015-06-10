@@ -1,6 +1,7 @@
-#include <stdlib.h>     // atoi, abs
+#include <cstdlib>     // atoi, abs
+#include <iostream>     // cout
 #include <vector>
-#include <stdio.h>
+#include <cstdio>
 #include <fstream>
 #include <string>
 //to parse program options
@@ -37,6 +38,11 @@ int main(int argc, char *argv[])
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
   po::notify(vm); 
+
+  if ( vm.count("help")  ) { 
+    std::cout << desc << std::endl; 
+    return 0; 
+  } 
 
   //parse input
   bool useE=0;

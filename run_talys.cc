@@ -14,7 +14,7 @@ void run_talys(Nucleus n, std::string infile_name, std::string outfile_name)
   double E=n.E();
 
   FILE* f_intalys=fopen(infile_name.c_str(),"w");
-  fprintf(f_intalys,"projectile 0\nelement    %i\nmass       %i\nenergy     efile\noutmain n\noutspectra y \noutbinspectra y\npopmev y\nmaxz 0\nmaxn 0",Z,A);
+  fprintf(f_intalys,"projectile 0\nelement    %i\nmass       %i\nenergy     efile\noutmain n\ndisctable 3\noutspectra y \noutbinspectra y\npopmev y\nmaxz 0\nmaxn 0",Z,A);
   fclose(f_intalys);
   //create talys energy file
   FILE *efile =fopen("efile","w");

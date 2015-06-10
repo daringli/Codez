@@ -5,13 +5,14 @@
 #Flag -n <name> specifies a name to attach in front of the numberous outfiles
 
 #plot style parameters
+ylims=[1e-2,1e7];
 ysize=500;
 xsize=500;
 fontsize=10;
 fontname="/usr/share/fonts/truetype/droid/DroidSans.ttf";
-%legendlocation="northwest";
-legendlocation="southeast";
-no_legend=true
+legendlocation="northwest";
+%legendlocation="southeast";
+no_legend=false
 
 xl='E/MeV';
 yl='\rho/(MeV^{-1})';
@@ -20,7 +21,7 @@ sizestring=strcat("-S",num2str(xsize),",",num2str(ysize));
 fontstring=strcat("-F",fontname,":",num2str(fontsize));
 
 %style={'-','--',':','-.','-r','--r',':r','-.r','-g','--g',':g','-.g'};
-color=copper(20);
+color=rainbow(13);
 
 #defaults
 useJ=0;
@@ -92,6 +93,7 @@ if (useJ==1)
    h=figure(1);
    clf
    hold on
+      ylim(ylims)
    xlabel(xl,'interpreter','tex');
    ylabel(yl,'interpreter','tex');
    title(strcat("Level densities for J=",num2str(j)));
@@ -122,6 +124,7 @@ else
       h=figure(1);
       clf
       hold on;
+      ylim(ylims);
       xlabel(xl,'interpreter','tex');
       ylabel(yl,'interpreter','tex');   
       title(strcat("Level densities for (Z,N)=(",num2str(z),",",num2str(n),")"));

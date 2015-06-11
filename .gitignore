@@ -6,6 +6,7 @@
 *.o
 talys_out
 talys_in
+efile
 pot
 trans
 rho

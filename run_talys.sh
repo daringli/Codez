@@ -1,2 +1,2 @@
 #!/bin/sh
-talys1-73 < talys_in > Z023N024E005j000.out
+talys1-73 < talys_in > Z090N130E020j000.out

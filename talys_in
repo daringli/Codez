@@ -1,6 +1,6 @@
 projectile 0
-element    23
-mass       48
+element    10
+mass       20
 energy     efile
 outmain n
 disctable 3

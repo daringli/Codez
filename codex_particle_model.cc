@@ -406,20 +406,20 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
     } 
     int Zd=Zm-Zevap; //daughter Z
     int Nd=Nm-Nevap; //daughter N
-    daughter.set_Z(Zd);
-    daughter.set_N(Nd);
     //if we do not have a mass for the daughter, we skip it.
     //this effectively assigns probability 0 to the decay to that daughter
     //which probably is fine, since it should be very short-lived.
     if(!can_be_run(Zd,Nd)){
       continue;
     }
+    daughter.set_Z(Zd);
+    daughter.set_N(Nd);
     evap.set_Z(Zevap);
     evap.set_N(Nevap);
     Proximity_potential pot = potential_properties(n, evap);
     double s=spin(evap);
     double BE=mass_model.excess_mass(daughter)+mass_model.excess_mass(evap)-mass_model.excess_mass(n);
-    //printf("Nev,Zev (BE):%i,%i (%e)\n",Nevap,Zevap,BE);
+    printf("Nev,Zev (BE):%i,%i (%e)\n",Nevap,Zevap,BE);
     if(Ei-BE<0){
       //cannot decay by this
       continue;
@@ -453,15 +453,15 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
       //daughter.set_J(Jf);
       //double SE=BE+intrinsic_energy(daughter);
      
-      float Ef=0;
+      float Ef=dE;
       int Ef_bin=0;
-      while(Ef<Ei-BE){
+      while(Ef<(Ei-BE)){
 	//printf("Ef: %f\n",Ef);
 	double trans_coef=transmission(n,daughter,Ei-Ef-BE,l,pot); 
-	if(trans_coef==0){
+	if(trans_coef==0)
 	  break;
 	  //subsequent Ef will be worse, since we have a lower kinetic energy
-	}
+
 	daughter.set_E(Ef);
 
 	//loop over all the possible Jf for this l
@@ -493,9 +493,9 @@ void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pa
 	Ef_bin++;
       }
     }
-    //printf("Rsum Zev=%i, Nev=%i : %e\n",Zevap,Nevap,Rsum_decay[counter].first);
-    //printf("counter: %i\n",counter);
-    //printf("----------\n");
+    printf("Rsum Zev=%i, Nev=%i : %e\n",Zevap,Nevap,Rsum_decay[counter].first);
+    printf("counter: %i\n",counter);
+    printf("----------\n");
   }	    
 }
   

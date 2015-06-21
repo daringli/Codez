@@ -24,7 +24,7 @@ Proximity_potential::Proximity_potential(double rsum, double coul1, double rc, d
   m_mu=mu;
   m_rsum=rsum;
   m_coul1=coul1;
-  m_coul2=coul1/(2*rcSet);
+  m_coul2=coul1/(2*rc);
   m_rc=rc;
   m_b=b;
 }

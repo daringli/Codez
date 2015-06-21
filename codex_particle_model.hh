@@ -48,7 +48,7 @@ public:
   void print_derivative_to_file(char* filename);
 
   double rc()const{return m_rc;}
-  double rin()const{return m_rin;}
+  double rsum()const{return m_rsum;}
   double vn_const()const{return m_vnConst;}
   double mu()const{return m_mu;}
   int l()const{return m_l;}
@@ -68,7 +68,7 @@ public:
 
   Proximity_potential potential_properties(Nucleus mother, Nucleus evaporation) const;
 
-  std::vector<xFx> potential_min_max(Potential const & pot, double x, int numChanges, double dx=1e-2) const;
+  std::vector<xFx> potential_min_max(Potential const & pot, double x, int numChanges, double dx) const;
 
   double tunneling(double E, Proximity_potential pot, xFx max, xFx min) const;
 

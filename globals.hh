@@ -13,9 +13,11 @@ extern Mass_model mass_model;
 
 //physical constants
 extern double e2; //elementary charge squared [MeV fm]
-extern double hbar;
+extern double hbar; //in fm MeV
 extern double hbar2;
 extern double u; //u in MeV
+extern double r0; //nuclear radius constant in fm
+
 
 //energy discretization
 extern double dE; //MeV

@@ -15,6 +15,8 @@ double e2=1.4399764; //elementary charge squared [MeV fm]
 double hbar=197.0; //[MeV fm]
 double hbar2=pow(hbar,2);
 double u=931.5; //u in MeV
+double r0=1.16; //r0 in fm
+
 
 //energy discretization
 double dE=0.1; //MeV

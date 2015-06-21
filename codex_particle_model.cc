@@ -19,14 +19,14 @@
 #include "can_be_run.hh"
 
 
-Proximity_potential::Proximity_potential(double rinSet, double coul1Set, double rcSet, double BSet,double vnConstSet, double muSet){
-  m_vnConst=vnConstSet;
-  m_mu=muSet;
-  m_rin=rinSet;
-  m_coul1=coul1Set;
-  m_coul2=coul1Set/(2*rcSet);
-  m_rc=rcSet;
-  m_b=BSet;
+Proximity_potential::Proximity_potential(double rsum, double coul1, double rc, double b,double vnConst, double mu){
+  m_vnConst=vnConst;
+  m_mu=mu;
+  m_rsum=rsum;
+  m_coul1=coul1;
+  m_coul2=coul1/(2*rcSet);
+  m_rc=rc;
+  m_b=b;
 }
 
 double Proximity_potential::value(double r) const
@@ -46,7 +46,7 @@ double Proximity_potential::value(double r) const
   else{
     vc=m_coul2*(3-pow(r/m_rc,2));
   }
-  double zeta=(r-m_rin)/m_b;
+  double zeta=(r-m_rsum)/m_b;
   if(zeta<1.2511){
     double help=zeta-2.54;
     phi=-0.5*pow(help,2)-0.0852*pow(help,3);
@@ -75,7 +75,7 @@ double Proximity_potential::first_derivative(double r) const
   else{
     dvc=m_coul2*(-2*r*pow(m_rc,-2));
   }
-  double zeta  = (r-m_rin)/m_b;
+  double zeta  = (r-m_rsum)/m_b;
   if(zeta <= 1.2511){
     double help = zeta - 2.54;
     dphi=(-2*0.5*help-3*0.0852*pow(help,2))/m_b;
@@ -90,7 +90,7 @@ double Proximity_potential::first_derivative(double r) const
 double Proximity_potential::second_derivative(double r) const
 {
   double d2vc,d2vcen,d2vn;
-  double zeta = (r-m_rin)/m_b;
+  double zeta = (r-m_rsum)/m_b;
   double d2phi;
     
   d2vcen=3*hbar2*(m_l+1)*m_l/(3*m_mu*pow(r,4));
@@ -112,35 +112,6 @@ double Proximity_potential::second_derivative(double r) const
   d2vn= (m_vnConst/(m_b*m_b)) * d2phi;
   return d2vcen + d2vc + d2vn;
 }
-
-void Proximity_potential::print_to_file(char* filename)
-{
-  //printf("l:%i\n",l);
-  double dr=0.1;
-  double r=0.5;
-  FILE *fout;
-  fout = fopen(filename,"w");
-  while(r<20){
-    fprintf(fout,"%f\t%f\n",r,value(r));
-    r+=dr;
-  }    
-  fclose(fout);    
-}
-
-void Proximity_potential::print_derivative_to_file(char* filename)
-{
-  double dr=0.1;
-  double r=0.5;
-  FILE *fout;
-  fout = fopen(filename,"w");
-  while(r<20){
-    fprintf(fout,"%f\t%f\n",r,first_derivative(r));
-    r+=dr;
-  }    
-  fclose(fout);    
-}
-
-
 
 Proximity_potential Codex_particle_model::potential_properties(Nucleus mother, Nucleus evaporation) const
 {
@@ -164,9 +135,9 @@ Proximity_potential Codex_particle_model::potential_properties(Nucleus mother, N
 
   double rc1=r1 * (1.0 - pow(b / r1,2) );
   double rc2=r2 * (1.0 - pow(b / r2,2) );
-  double rin=rc1+rc2; //sum or radii of both nuclei
-  double cmean=(rc1*rc2)/rin;
-  double rc=1.25*pow(A1,1.0/3.0);   
+  double rsum=rc1+rc2; //sum or radii of both nuclei
+  double cmean=(rc1*rc2)/rsum;
+  double rc=r0*pow(A1,1.0/3.0);   
 
   double coul1 = Z1*Z2*e2;
 
@@ -184,16 +155,15 @@ Proximity_potential Codex_particle_model::potential_properties(Nucleus mother, N
 
 
 
-  return Proximity_potential(rin, coul1, rc, b, vnConst,mu);
+  return Proximity_potential(rsum, coul1, rc, b, vnConst,mu);
     
 }
 
-std::vector<xFx> Codex_particle_model::potential_min_max(Proximity_potential const & pot, double x, int numChanges) const
+std::vector<xFx> Codex_particle_model::potential_min_max(Potential const & pot, double x, int numChanges, double dx=1e-2) const
 {
   //starts at x and goes upwards, looking for sign changes in derivative.
   //returns values at each sign change. NOTE: not recommended to let numChanges be more than 2, since the function will search forever...
   std::vector<xFx> extremum(numChanges);
-  double dx=1e-2;
   double df=pot.first_derivative(x);
   int sign=(df > 0) ? 1 : ((df < 0) ? -1 : 0);
   int newsign;
@@ -293,7 +263,7 @@ double Codex_particle_model::tunneling(double E, Proximity_potential pot, xFx mi
 
   //We now want to integrate between rinner to router with a suitable method! 
   double mu=pot.mu();
-  double Gamow=(2*sqrt(2*mu)/hbar)*sqrt(integrate(pot,E,rinner,router));
+  double Gamow=(sqrt(2*mu)/hbar)*integrate(pot,E,rinner,router); //Check the 2!!!!
   return 1.0/(1.0+exp(2*Gamow));
 }
 

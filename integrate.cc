@@ -1,10 +1,11 @@
 #include "integrate.hh"
+#include <cmath>
 
 double integrate(Potential const & pot, double E, double ri, double ro)
 {
   //following MyCodex, we split up the interval in parts and use
   //Guassian quadrature with n=7 on each subinterval.
-  //Integrate V-E
+  //Integrate sqrt(V-E)
   int intervals=2;
   int n=7;
   int index; //since a[-j]=a[j], we use index=abs(j).
@@ -28,7 +29,7 @@ double integrate(Potential const & pot, double E, double ri, double ro)
     for(int j=-values; j<=values;j++){
       index=abs(values);
       r=x[index]*0.5*subintervalLength+center;
-      integral+=0.5*subintervalLength*(pot.value(r)-E);
+      integral+=0.5*subintervalLength*(sqrt(pot.value(r)-E));
     }
   }
   return integral;

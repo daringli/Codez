@@ -25,7 +25,7 @@ class Proximity_potential: public Potential
 {
 private:
   int m_l;
-  double m_rin;
+  double m_rsum;
   double m_coul1;
   double m_coul2;
   double m_rc;
@@ -68,7 +68,7 @@ public:
 
   Proximity_potential potential_properties(Nucleus mother, Nucleus evaporation) const;
 
-  std::vector<xFx> potential_min_max(Proximity_potential const & pot, double x, int numChanges) const;
+  std::vector<xFx> potential_min_max(Potential const & pot, double x, int numChanges, double dx=1e-2) const;
 
   double tunneling(double E, Proximity_potential pot, xFx max, xFx min) const;
 

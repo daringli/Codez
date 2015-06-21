@@ -1,0 +1,60 @@
+\lstset{language=C++ ,basicstyle=\footnotesize, breaklines=true, %backgroundcolor=\color[rgb]{0.8,0.8,0.8},
+%xleftmargin=11pt, xrightmargin=11pt
+}
+
+\section{codex\_particle\_model}
+This class implements the p, n, d, t, h (helion, $~^{3}\mathrm{He})$, $\alpha$ evaporation decay models. Below is a description of the functions defined in the corresponding \texttt{.cc} file. NOTE: this includes functions in the \texttt{proximity\_potential} class.
+
+\begin{lstlisting}
+Proximity_potential::Proximity_potential(double rsum, double coul1, double rc, double b,double vnConst, double mu)
+\end{lstlisting}
+This is the constructor of a Coulomb + centrifugal + Blocki 1977 proximity potential; sloppily called the ``proximity potential''. \texttt{rsum} is the sum of the diffuse radii of the daughter nucleus and evaporating particle, used to determine when the nuclei overlap. \texttt{coul1} is the constant in the Coulomb potential, $Z_1 Z_2 e^2$. \texttt{rc} is the charge radius, \texttt{b} the surface diffuseness of the nuclei, \texttt{vnconst} the geometric constant in front of the universal function in the proximity potential, and \texttt{mu} is the reduced mass of the evaporated particles, $\mu = m_1 m_2/(m_1+m_2)$.
+
+\begin{lstlisting}
+double Proximity_potential::value(double r) const
+\end{lstlisting}
+Returns the value of the so-called proximity potential at radius $r$, given in \unit{fm}, which really is the total potential, including Coulomb and centrifugal contributions. This is a virtual function of the \emph{potential} abstract class.
+
+\begin{lstlisting}
+double Proximity_potential::first_derivative(double r) const
+\end{lstlisting}
+Returns the value of the first derivative of the proximity potential at radius $r$, given in \unit{fm}. This is a virtual function of the \emph{potential} abstract class.
+
+\begin{lstlisting}
+double Proximity_potential::second_derivative(double r) const
+\end{lstlisting}
+Returns the value of the second derivative of the proximity potential at radius $r$, given in \unit{fm}. This is a virtual function of the \emph{potential} abstract class.
+
+\begin{lstlisting}
+Proximity_potential Codex_particle_model::potential_properties(Nucleus mother, Nucleus evaporation) const
+\end{lstlisting}
+Constructs and returns a ``proximity potential'' given a mother nucleus and evaporation mode. It uses various models to calculate all the inputs needed by the ``proximity potential'' constructor from the properties of the mother nucleus and evaporated particle.
+
+\begin{lstlisting}
+std::vector<xFx> Codex_particle_model::potential_min_max(Potential const & pot, double x, int numChanges, double dx=1e-2) const
+\end{lstlisting}
+This function finds the extremums of a potential for $r>\texttt{x}$ by counting the number of times the potential changes signs, until it has changed signs \texttt{numChanges} times. It returns a vector with a struct containing both the function value at the extremum and at which radius it occurs. \texttt{dx} sets the discretization in \texttt{x} to use, the default is $\unit[0.01]{fm}$.
+
+\begin{lstlisting}
+double Codex_particle_model::tunneling(double E, Proximity_potential pot, xFx min, xFx max) const
+\end{lstlisting}
+This function finds the classical turning points by using Newton's method. It than calculates the tunneling probability in the WKB approximation by integrating $\sqrt{V-E}$ between these points.
+
+\begin{lstlisting}
+double Codex_particle_model::transmission(Nucleus initial, Nucleus final, double E, int l, Proximity_potential pot) const
+\end{lstlisting}
+Calculates the transmission coefficient, which essentially is the tunneling probability for energies below the height of the potential barrier.
+
+\begin{lstlisting}
+double Codex_particle_model::spin(Nucleus n) const
+\end{lstlisting}
+Returns the spin of the evaporated particle for evaporations supported by this class (p,n,d,t,h,$\alpha$).
+
+\begin{lstlisting}
+void Codex_particle_model::Rsum(Nucleus n, int jmax,int lmax,std::vector<std::pair<double,Decay> > & Rsum_decay,  int & counter) const
+\end{lstlisting}
+This function sums up $R=\frac{d^2 P}{dt dE_f^*}$ for the decay modes accounted for in \texttt{codex\_particle\_model}.
+It first sums $l$ from zero to $l_\text{max}$, than $S=|J_i-l|,\dots , |J_i+l|$ and finally $J_f =|S-s|,\dots , |S+s|$. The only calculation performed in the two inner loops is counting the number of times specific $J_f$ values occur, which gives the number of ways to couple the relevant angular momenta to end up in $J=J_f$.
+A second loop nested in the $l$-loop goes from $E_f^*=0$ to $E_f^* = E_f^* - S_\nu$ with an increment of $dE$ during each loop. In this loop, $T_l(E)$ is calculated once, and all the found $J_f$ values are looped over. In the $J_f$ loop, $\rho(E_f^*,J_f)$ is either calculated or looked up in a table, depending on if it has been calculated before for this decay. Combining $\rho(E_f^*,J_f)$ with $T_l$ and the number of ways to end up in this state gives the $d\Gamma$ to decay to this state, which is then added to the \texttt{Rsum} in the \texttt{Rsum\_decay} table, along with information about this decay mode.
+
+The probability to decay to nuclei for which the level density cannot be calculated is set to zero, which should be fine since those nuclei should be on the edge of the chart of the nuclides and thus very unstable and unlikely to decay too.
